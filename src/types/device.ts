@@ -1,0 +1,25 @@
+export type DeviceInfo = {
+  manufacturer: string;
+  model: string;
+  brand: string;
+  device: string;
+  product: string;
+  hardware: string;
+  board: string;
+  androidVersion: string;
+  sdkVersion: number;
+  buildNumber: string;
+  securityPatch: string;
+  fingerprint: string;
+  bootloader: string;
+  buildTags: string;
+  buildType: string;
+  buildDisplay: string;
+  buildTime: number;
+  totalRam: number;
+  availableRam: number;
+  totalStorage: number;
+  availableStorage: number;
+  processorCount: number;
+  maxMemory: number;
+};
