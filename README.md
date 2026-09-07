@@ -1,35 +1,53 @@
-# CelUsado - Diagnóstico y Verificación Android
+# CelUsado
+> **"La herramienta técnica definitiva para la compra y venta segura de dispositivos Android."**
 
-Aplicación de React Native diseñada para la revisión técnica de dispositivos Android usados, enfocada en detectar configuraciones de administración (MDM), integridad del sistema y capacidades de control.
+**CelUsado** es una aplicación de código abierto diseñada para realizar auditorías técnicas profundas en dispositivos Android antes de una transacción. A diferencia de las apps de diagnóstico tradicionales que solo prueban el hardware, CelUsado se enfoca en la **seguridad administrativa e integridad del software**, ayudando a identificar riesgos que no son visibles a simple vista.
 
-## 🛠️ Requisitos Previos
+## ✨ Características Principales
+*   **Detección de MDM y Control Remoto:** Identifica perfiles de *Device Owner*, *Profile Owner* y *Device Administrators* que podrían ser usados para bloquear el equipo remotamente (común en equipos financiados o corporativos).
+*   **Auditoría de Aplicaciones:** Clasifica las apps instaladas (Sistema, OEM, Google, Operador, Usuario) y detecta permisos sensibles como `FORCE_LOCK` o servicios de accesibilidad sospechosos.
+*   **Integridad del Sistema:** Busca indicios de modificaciones en el sistema, estado del bootloader y señales de Root.
+*   **Hardware Real-Time:** Reporte detallado de SoC, salud de batería (ciclos y temperatura), almacenamiento y RAM real.
+*   **Privacidad Total:** Análisis pasivo y offline. La app no modifica el sistema ni envía datos personales a servidores externos.
 
+## 🛠️ Stack Tecnológico
+*   **Frontend:** React Native 0.76 (TypeScript).
+*   **Capa Nativa:** Custom Modules en **Kotlin** para acceso profundo a APIs de Android (`Build`, `StatFs`, `BatteryManager`, etc.).
+*   **Arquitectura:** React Native Legacy Architecture (optimizado para compatibilidad total con módulos nativos de seguridad).
+
+---
+
+## 🚀 Guía de Inicio Rápido
+
+### 📋 Requisitos Previos
 Antes de comenzar, asegúrate de tener instalado:
 - **Node.js**: v18 o superior.
 - **Java JDK**: 17 (Recomendado para React Native 0.76+).
 - **Android Studio**: Configurado con las herramientas de compilación y emulador.
 
-## ⚙️ Configuración del Entorno (Windows)
+### ⚙️ Configuración del Entorno (Windows)
 
-### 1. Variables de Entorno
+#### 1. Variables de Envorno
 Es fundamental que tu sistema reconozca las herramientas de Android:
 - Define `ANDROID_HOME` apuntando a tu SDK (ej. `C:\Users\TU_USUARIO\AppData\Local\Android\Sdk`).
 - Añade a tu `Path` la carpeta `platform-tools` (ej. `%ANDROID_HOME%\platform-tools`).
 
-### 2. Archivo `local.properties`
-Este proyecto requiere que el archivo `android/local.properties` exista y tenga la ruta correcta al SDK para poder compilar:
+#### 2. Archivo `local.properties`
+Este proyecto requiere que el archivo `android/local.properties` exista y tenga la ruta correcta al SDK:
 ```properties
 sdk.dir=C\:\\Users\\TU_USUARIO\\AppData\\Local\\Android\\Sdk
 ```
-*(Asegúrate de escapar los dos puntos `\:` y las barras invertidas `\\` como se muestra arriba).*
+*(Asegúrate de escapar los dos puntos `\:` y las barras invertidas `\\`).*
 
-### 3. Arquitectura del Proyecto
+#### 3. Arquitectura del Proyecto
 Para garantizar la compatibilidad con los módulos nativos personalizados (`AppDeviceInfo`), la **Nueva Arquitectura** de React Native 0.76 se encuentra **desactivada** en `android/gradle.properties`:
 ```properties
 newArchEnabled=false
 ```
 
-## 🚀 Inicio Rápido
+---
+
+## 🏃 Ejecución
 
 ### Paso 1: Instalar dependencias
 ```bash
@@ -37,13 +55,13 @@ npm install
 ```
 
 ### Paso 2: Iniciar Metro Bundler
-Abre una terminal y ejecuta:
+En una terminal:
 ```bash
 npm start
 ```
 
 ### Paso 3: Ejecutar en Android
-Abre una **segunda terminal** y con un emulador o celular conectado:
+En una segunda terminal (con emulador o celular conectado):
 ```bash
 npm run android
 ```
