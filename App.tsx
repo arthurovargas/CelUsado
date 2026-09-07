@@ -4,15 +4,18 @@ import {NavigationContainer} from '@react-navigation/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {AppNavigator} from './src/navigation/AppNavigator';
 import {ErrorBoundary} from './src/utils/ErrorBoundary';
+import {AnalysisProvider} from './src/context/AnalysisContext';
 
 const App = () => {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <NavigationContainer>
-          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-          <AppNavigator />
-        </NavigationContainer>
+        <AnalysisProvider>
+          <NavigationContainer>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <AppNavigator />
+          </NavigationContainer>
+        </AnalysisProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );

@@ -4,6 +4,9 @@ import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../../types/navigation';
 import {fetchDeviceInfo} from '../../domain/device';
+import {analyzeAllPackages} from '../../modules/android/PackageAnalyzer';
+import {analyzeDeviceControl} from '../../modules/android/DeviceControl';
+import {useAnalysis} from '../../context/AnalysisContext';
 import {logger} from '../../utils';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Scan'>;
@@ -16,12 +19,8 @@ type ScanStep = {
 
 const INITIAL_STEPS: ScanStep[] = [
   {id: 'device', label: 'Información del equipo', status: 'pending'},
-  {id: 'policy', label: 'Política del dispositivo', status: 'pending'},
-  {id: 'admin', label: 'Administradores', status: 'pending'},
-  {id: 'accessibility', label: 'Accesibilidad', status: 'pending'},
-  {id: 'vpn', label: 'VPN', status: 'pending'},
-  {id: 'integrity', label: 'Integridad', status: 'pending'},
-  {id: 'apps', label: 'Aplicaciones', status: 'pending'},
+  {id: 'apps', label: 'Análisis de aplicaciones', status: 'pending'},
+  {id: 'control', label: 'Análisis de administración', status: 'pending'},
   {id: 'report', label: 'Generar informe', status: 'pending'},
 ];
 
@@ -31,6 +30,7 @@ export const ScanScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const [steps, setSteps] = useState<ScanStep[]>(INITIAL_STEPS);
   const [isScanning, setIsScanning] = useState(false);
+  const {setAnalysisResult, setControlResult, setAnalyzing, setError} = useAnalysis();
 
   const updateStep = useCallback((index: number, status: ScanStep['status']) => {
     setSteps(prev => prev.map((step, idx) => (idx === index ? {...step, status} : step)));
@@ -38,6 +38,7 @@ export const ScanScreen = () => {
 
   const runScan = async () => {
     setIsScanning(true);
+    setAnalyzing(true);
     setSteps(INITIAL_STEPS);
 
     for (let i = 0; i < INITIAL_STEPS.length; i++) {
@@ -48,18 +49,30 @@ export const ScanScreen = () => {
           case 'device':
             await fetchDeviceInfo();
             break;
-          default:
-            await new Promise(resolve => setTimeout(resolve, 500));
+          case 'apps':
+            const result = await analyzeAllPackages();
+            setAnalysisResult(result);
+            logger.info(TAG, `Package analysis completed: ${result.packages.length} packages found`);
+            break;
+          case 'control':
+            const controlResult = await analyzeDeviceControl();
+            setControlResult(controlResult);
+            logger.info(TAG, `Device control analysis completed: ${controlResult.indicators.length} indicators found`);
+            break;
+          case 'report':
+            await new Promise(resolve => setTimeout(resolve, 300));
             break;
         }
         updateStep(i, 'done');
       } catch (error) {
         logger.error(TAG, `Step ${INITIAL_STEPS[i]!.id} failed`, error);
+        setError(error instanceof Error ? error.message : 'Unknown error');
         updateStep(i, 'error');
       }
     }
 
     setIsScanning(false);
+    setAnalyzing(false);
     navigation.navigate('Report');
   };
 

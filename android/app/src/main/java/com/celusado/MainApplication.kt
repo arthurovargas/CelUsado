@@ -11,6 +11,8 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.celusado.modules.DeviceInfoPackage
+import com.celusado.modules.packageanalyzer.PackageAnalyzerPackage
+import com.celusado.modules.devicecontrol.DeviceControlPackage
 import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
@@ -21,6 +23,8 @@ class MainApplication : Application(), ReactApplication {
             PackageList(this).packages.apply {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               add(DeviceInfoPackage())
+              add(PackageAnalyzerPackage())
+              add(DeviceControlPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

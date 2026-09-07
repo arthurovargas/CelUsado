@@ -2,6 +2,42 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <queries>
+        <!-- Launcher discovery -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Device Admin settings -->
+        <intent>
+            <action android:name="android.app.action.DEVICE_ADMIN_SETTINGS" />
+        </intent>
+        <!-- Accessibility settings -->
+        <intent>
+            <action android:name="android.settings.ACCESSIBILITY_SETTINGS" />
+        </intent>
+        <!-- VPN settings -->
+        <intent>
+            <action android:name="android.net.vpn.SETTINGS" />
+        </intent>
+        <!-- Known MDM/management packages -->
+        <package android:name="com.samsung.android.knox" />
+        <package android:name="com.samsung.android.knox.ddar" />
+        <package android:name="com.samsung.android.knox.containermanager" />
+        <package android:name="com.google.android.apps.work.oobconfig" />
+        <package android:name="com.google.android.apps.work.clc" />
+        <package android:name="com.microsoft.windowsintune.companyportal" />
+        <package android:name="com.vmware.workspaceone" />
+        <package android:name="com.mobileiron" />
+        <package android:name="com.mobileiron.circulate" />
+        <package android:name="com.lookout" />
+        <package android:name="com.lookout.android" />
+        <package android:name="com.zimperium" />
+        <package android:name="com.zimperium.zipservice" />
+        <package android:name="com.android.managedprovisioning" />
+        <package android:name="com.android.packageinstaller" />
+    </queries>
+
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
