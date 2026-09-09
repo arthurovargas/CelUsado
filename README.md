@@ -1,99 +1,76 @@
 # CelUsado
+
 > **"La herramienta técnica definitiva para la compra y venta segura de dispositivos Android."**
 
 **CelUsado** es una aplicación de código abierto diseñada para realizar auditorías técnicas profundas en dispositivos Android antes de una transacción. A diferencia de las apps de diagnóstico tradicionales que solo prueban el hardware, CelUsado se enfoca en la **seguridad administrativa e integridad del software**, ayudando a identificar riesgos que no son visibles a simple vista.
 
-## ✨ Características Principales
-*   **Detección de MDM y Control Remoto:** Identifica perfiles de *Device Owner*, *Profile Owner* y *Device Administrators* que podrían ser usados para bloquear el equipo remotamente (común en equipos financiados o corporativos).
-*   **Auditoría de Aplicaciones:** Clasifica las apps instaladas (Sistema, OEM, Google, Operador, Usuario) y detecta permisos sensibles como `FORCE_LOCK` o servicios de accesibilidad sospechosos.
-*   **Integridad del Sistema:** Busca indicios de modificaciones en el sistema, estado del bootloader y señales de Root.
-*   **Motor de Reglas y Risk Score:** Evalúa combinación de indicadores para asignar un nivel de riesgo (BAJO / MODERADO / ALTO / CRÍTICO).
-*   **Informe Exportable:** Genera reportes en JSON o texto plano con todos los hallazgos.
-*   **Privacidad Total:** Análisis pasivo y offline. La app no modifica el sistema ni envía datos personales a servidores externos.
+## Características Principales
 
-## 🛠️ Stack Tecnológico
-*   **Frontend:** React Native 0.76 (TypeScript).
-*   **Capa Nativa:** Custom Modules en **Kotlin** para acceso profundo a APIs de Android (`Build`, `StatFs`, `BatteryManager`, etc.).
-*   **Arquitectura:** React Native Legacy Architecture (optimizado para compatibilidad total con módulos nativos de seguridad).
+- **Detección de MDM y Control Remoto:** Identifica perfiles de *Device Owner*, *Profile Owner* y *Device Administrators* que podrían ser usados para bloquear el equipo remotamente (común en equipos financiados o corporativos).
+- **Auditoría de Aplicaciones:** Clasifica las apps instaladas (Sistema, OEM, Google, Operador, Usuario) y detecta permisos sensibles como `FORCE_LOCK` o servicios de accesibilidad sospechosos.
+- **Integridad del Sistema:** Busca indicios de modificaciones en el sistema, estado del bootloader y señales de Root.
+- **Modo Oscuro:** Interfaz completamente oscura para mejor experiencia visual.
+- **Privacidad Total:** Análisis pasivo y offline. La app no modifica el sistema ni envía datos personales a servidores externos.
 
 ---
 
-## 📊 Informe de Diagnóstico
+## Sistema de Puntuación de Aplicaciones
 
-El informe se genera automáticamente después de ejecutar el análisis completo. Se divide en las siguientes secciones:
+Cada aplicación instalada recibe un **puntaje individual de 0 a 100** basado en las capacidades de riesgo que posee. Este puntaje se calcula sumando los pesos de los factores detectados en la aplicación.
 
-### 1. RIESGO GENERAL
+### Fórmula de Puntuación
 
-Muestra el nivel de riesgo calculado por el motor de reglas:
+| Factor | Puntos | Descripción |
+|---|---|---|
+| **DEVICE_OWNER** | +40 | Control total del dispositivo. Puede configurar políticas, borrar datos, bloquear funciones y administrar otras apps. |
+| **PROFILE_OWNER** | +30 | Control dentro de un perfil de trabajo. Puede restringir apps, configuración y datos dentro de ese perfil. |
+| **DEVICE_ADMIN** | +20 | Privilegios de administrador. Puede bloquear el dispositivo, cambiar contraseña, borrar datos y restringir funciones. |
+| **ROOT_BINARY** | +35 | Binario de root (su, suid) detectado en el sistema. Acceso de superusuario. |
+| **ROOT_APP** | +35 | Aplicación de root conocida (Magisk, SuperSU). Dispositivo modificado para obtener acceso root. |
+| **Mod Framework** | +35 | Framework de modificación (Xposed, LSPosed). Permite modificar el comportamiento del sistema y otras apps. |
+| **WIPE_CAPABILITY** | +20 | Capacidad de borrar todos los datos del dispositivo (factory reset). |
+| **FORCE_LOCK** | +15 | Puede bloquear el dispositivo forzosamente sin intervención del usuario. |
+| **ACCESSIBILITY_SERVICE** | +15 | Servicio de accesibilidad de terceros habilitado. Puede leer pantalla, capturar gestos y controlar el dispositivo. |
+| **VPN_SERVICE** | +10 | Servicio VPN activo. Puede interceptar y redirigir todo el tráfico de red. |
+| **OVERLAY** | +10 | Permiso para dibujar sobre otras apps. Puede mostrar ventanas encima de otras aplicaciones (potencial phishing). |
+| **PERSISTENT_SERVICE** | +10 | Servicio persistente que no se puede detener fácilmente. Se mantiene activo en segundo plano. |
+| **BOOT_RECEIVER** | +5 | Se ejecuta automáticamente al encender el dispositivo. |
+| **ADMINISTRATIVE_POLICY** | +5 | Aplica políticas administrativas que pueden restringir funciones del dispositivo. |
 
-| Nivel | Significado |
-|---|---|
-| **BAJO** (0-14) | Dispositivo en estado estándar, sin indicadores significativos |
-| **MODERADO** (15-34) | Señales que requieren verificación manual |
-| **ALTO** (35-59) | Evidencia fuerte de administración o modificación |
-| **CRÍTICO** (60-100) | Múltiples indicadores de riesgo组合 |
+> **Nota:** El puntaje total está limitado a un máximo de 100.
 
-El score se calcula sumando pesos de reglas activadas (root, administración, integridad, etc.).
+### Niveles de Riesgo
 
-### 2. IDENTIFICACIÓN
+| Nivel | Rango | Color | Significado |
+|---|---|---|---|
+| **SIN CAPACIDADES** | 0 | Gris | La aplicación no tiene capacidades especiales detectadas. |
+| **BAJO** | 1 - 14 | Azul | Capacidades mínimas, generalmente inofensivas. |
+| **MEDIO** | 15 - 39 | Amarillo | Capacidades que requieren revisión manual. |
+| **ALTO** | 40 - 69 | Rojo claro | Evidencia fuerte de administración o control. |
+| **MUY ALTO** | 70 - 100 | Rojo oscuro | Control total del dispositivo o acceso root. |
 
-Datos básicos del dispositivo:
-- Fabricante, modelo y marca
-- Versión de Android y nivel de SDK
+### Cómo se Presenta la Información
 
-### 3. HARDWARE
+En la pantalla principal, cada aplicación muestra:
 
-Especificaciones físicas:
-- **SoC** (System on Chip): Procesador principal
-- **Board**: Placa base
-- **RAM**: Memoria total instalada
-- **Almacenamiento**: Capacidad total del dispositivo
-- **CPU**: Número de núcleos del procesador
+```
+┌─────────────────────────────────────────┐
+│  Seguridad                    65       │
+│  com.miui.securitycenter      ALTO     │
+│                                         │
+│  [ACCESSIBILITY_SERVICE +15]            │
+│  [BOOT_RECEIVER +5] [PERSISTENT +10]   │
+└─────────────────────────────────────────┘
+```
 
-### 4. SOFTWARE
+- **Nombre y Package:** Identificación de la aplicación
+- **Puntaje:** Número de 0 a 100
+- **Nivel:** Badge con color que indica el nivel de riesgo
+- **Factores:** Los 3 factores principales que contribuyen al puntaje
 
-Información del sistema operativo:
-- **Versión**: Build completo del firmware
-- **Parche de seguridad**: Fecha del último parche de Android
-- **Fingerprint**: Identificador único del build
-- **Bootloader**: Estado del bootloader
-- **Build Tags**: `release-keys` (normal) vs `test-keys` (modificado)
-- **Build Type**: `user` (normal) vs `userdebug`/`eng` (desarrollo)
+### Clasificación de Aplicaciones
 
-### 5. COBERTURA - ANÁLISIS DE APLICACIONES
-
-Resumen del análisis de paquetes:
-- Total de paquetes descubiertos vs analizados
-- Limitaciones de visibilidad (apps ocultas por el sistema)
-
-### 6. COBERTURA - ANÁLISIS DE ADMINISTRACIÓN
-
-Resumen del análisis de control:
-- Número total de indicadores detectados
-- Estado del análisis y limitaciones
-
-### 7. INTEGRIDAD DEL DISPOSITIVO
-
-Estado general de integridad del sistema:
-- **NORMAL**: Sin indicadores de modificación
-- **INDICATOR**: Un solo indicador detectado
-- **MULTIPLE_INDICATORS**: Múltiples indicadores
-- **INTEGRITY_COMPROMISED**: Integridad comprometida
-
-### 8. INDICADORES DE INTEGRIDAD
-
-Detalle de cada indicador de integridad detectado:
-
-| Campo | Descripción |
-|---|---|
-| **Tipo** | BUILD_TEST_KEYS, CUSTOM_ROM, ROOT_BINARY, BOOTLOADER_UNLOCKED, etc. |
-| **Estado** | CONFIRMED, ACTIVE, NOT_DETECTED, NOT_AVAILABLE |
-| **Confianza** | 0-100% de certeza en la detección |
-| **Fuente** | De dónde se obtuvo la información (propiedad del sistema, paquete, etc.) |
-
-### 9. CLASIFICACIÓN DE APLICACIONES
-
-Distribución de apps por categoría:
+Las apps se clasifican automáticamente en categorías:
 
 | Categoría | Descripción |
 |---|---|
@@ -104,169 +81,177 @@ Distribución de apps por categoría:
 | **USER** | Apps instaladas por el usuario |
 | **UNKNOWN** | Apps no clasificadas |
 
-### 10. INDICADORES DE ADMINISTRACIÓN
+---
 
-Lista de indicadores de control detectados. Cada indicador muestra:
+## Pantalla de Detalle de Aplicación
 
-| Campo | Descripción |
+Al tocar una aplicación, se muestra su detalle completo:
+
+### Secciones
+
+1. **Puntaje General:** Score /100 con nivel de riesgo
+2. **Capacidades Detectadas:** Lista de factores con sus puntos. Toca cada factor para ver una explicación detallada.
+3. **Información:** Package, versión, instalador, categoría, si es app del sistema.
+4. **Permisos Declarados:** Lista completa de permisos. Toca para expandir y ver todos.
+
+### Explicaciones de Capacidades
+
+Cada capacidad detectada tiene una explicación detallada:
+
+| Capacidad | Explicación |
 |---|---|
-| **Tipo** | DEVICE_ADMIN, DEVICE_OWNER, PROFILE_OWNER, ACCESSIBILITY_SERVICE, VPN_SERVICE, OVERLAY, FORCE_LOCK, WIPE_CAPABILITY |
-| **Paquete** | Nombre del paquete de la aplicación |
-| **Estado** | CONFIRMED, ACTIVE, DECLARED, NOT_DETECTED, NOT_ACCESSIBLE |
-| **Confianza** | 0-100% de certeza |
-
-#### Nivel de Evidencia
-
-Cada indicador tiene un badge de nivel de evidencia:
-
-| Badge | Estado del indicador | Significado |
-|---|---|---|
-| **HECHO** | CONFIRMED, ACTIVE | Evidencia confirmada técnicamente |
-| **INDICIO** | DECLARED, CAPABLE, DETECTED | Señal detectada pero no confirmada |
-| **NO DETERMINABLE** | NOT_DETECTED, NOT_ACCESSIBLE, NOT_AVAILABLE | No se pudo verificar |
-
-### 11. TODAS LAS APLICACIONES
-
-Lista completa de apps analizadas con su clasificación.
-
-### 12. CONCLUSIÓN
-
-Resumen ejecutivo:
-- Número de indicadores de alto nivel detectados
-- Recomendación basada en el nivel de riesgo
-- Disclaimer sobre la naturaleza técnica del informe
-
-### 13. METADATOS DEL INFORME
-
-- Fecha y hora de generación
-- Versión de la aplicación (`0.0.1`)
-- Versión de las reglas de análisis (`1.0.0`)
-- Conteos de paquetes e indicadores
+| **DEVICE_OWNER** | Control total del dispositivo. Puede configurar políticas de seguridad, borrar datos, bloquear funciones y administrar otras aplicaciones. |
+| **PROFILE_OWNER** | Control dentro de un perfil de trabajo. Puede restringir apps, configuración y datos dentro de ese perfil. |
+| **DEVICE_ADMIN** | Privilegios de administrador. Puede bloquear el dispositivo, cambiar contraseña, borrar datos y restringir funciones. |
+| **ACCESSIBILITY_SERVICE** | Servicio de accesibilidad de terceros habilitado. Puede leer el contenido de la pantalla, capturar gestos y controlar el dispositivo. |
+| **VPN_SERVICE** | Servicio VPN activo. Puede interceptar y redirigir todo el tráfico de red del dispositivo. |
+| **OVERLAY** | Permiso para dibujar sobre otras apps. Puede mostrar ventanas encima de otras aplicaciones, potencialmente para phishing. |
+| **FORCE_LOCK** | Puede bloquear el dispositivo forzosamente sin intervención del usuario. |
+| **WIPE_CAPABILITY** | Capacidad de borrar todos los datos del dispositivo (factory reset). |
+| **BOOT_RECEIVER** | Se ejecuta automáticamente al encender el dispositivo. |
+| **PERSISTENT_SERVICE** | Servicio persistente que no se puede detener fácilmente. |
+| **ROOT_BINARY** | Binario de root detectado en el sistema. Acceso de superusuario. |
+| **ROOT_APP** | Aplicación de root conocida detectada. Dispositivo modificado. |
+| **Mod Framework** | Framework de modificación detectado. Permite modificar el comportamiento del sistema. |
+| **ADMINISTRATIVE_POLICY** | Políticas administrativas activas que pueden restringir funciones. |
 
 ---
 
-## 📱 Sección de Aplicaciones
+## Análisis de Integridad
 
-La pantalla de aplicaciones muestra el detalle de cada paquete instalado:
+El sistema verifica la integridad del dispositivo buscando:
 
-### Información Básica
-
-| Campo | Descripción |
+| Indicador | Descripción |
 |---|---|
-| **Nombre** | Nombre visible de la aplicación |
-| **Package** | Identificador único del paquete (ej: `com.whatsapp`) |
-| **Versión** | Nombre y código de versión |
-| **Instalador** | Paquete que instaló la app (Google Play, Samsung Store, etc.) |
-| **Primera instalación** | Fecha de instalación original |
-| **Última actualización** | Fecha de la última actualización |
+| **BUILD_TEST_KEYS** | Build compilado con claves de prueba (modificado) |
+| **CUSTOM_ROM** | ROM personalizada instalada |
+| **ROOT_BINARY** | Binario de root encontrado en el sistema |
+| **ROOT_APP** | Aplicación de root conocida |
+| **BOOTLOADER_UNLOCKED** | Bootloader desbloqueado |
+| **MOD_FRAMEWORK** | Framework de modificación (Xposed, LSPosed) |
 
-### Estado
+### Estados de Integridad
 
-| Campo | Descripción |
+| Estado | Significado |
 |---|---|
-| **Sistema** | `true` si es app del sistema |
-| **Actualizada** | `true` si es una app del sistema que fue actualizada |
-| **Debuggable** | `true` si permite depuración (normal en desarrollo) |
+| **NORMAL** | Sin indicadores de modificación |
+| **INDICATOR** | Un solo indicador detectado |
+| **MULTIPLE_INDICATORS** | Múltiples indicadores |
+| **INTEGRITY_COMPROMISED** | Integridad comprometida |
 
-### Clasificación
+---
 
-| Campo | Descripción |
-|---|---|
-| **Categoría** | SYSTEM, OEM, GOOGLE, CARRIER, USER, UNKNOWN |
-| **Confianza** | 0-100% de certeza en la clasificación |
-| **Evidencia** | Razones de la clasificación |
+## Motor de Reglas
 
-### Componentes
+CelUsado utiliza un motor de 15 reglas predefinidas que evalúan combinaciones de indicadores para detectar patrones de riesgo conocidos.
 
-| Campo | Descripción |
-|---|---|
-| **Permisos** | Permisos declarados en el manifest |
-| **Servicios** | Servicios registrados |
-| **Receptores** | Broadcast receivers registrados |
-| **Activities** | Activities registradas |
-| **Providers** | Content providers registrados |
+### Categorías de Reglas
 
-### Firma
+- **Administración:** Device Owner, Profile Owner, Device Admin
+- **Servicios Peligrosos:** Accessibility, VPN, Overlay
+- **Control Destructivo:** Force Lock, Wipe
+- **Persistencia:** Boot Receiver, Persistent Service
+- **Root/Modificación:** Root binaries, frameworks de modificación
 
-| Campo | Descripción |
-|---|---|
-| **Esquema** | Versión del esquema de firma |
-| **Múltiples firmantes** | `true` si tiene más de un certificado |
-| **Firmantes actuales** | Certificados actuales |
-| **Firmantes históricos** | Certificados anteriores (cambios de firma = sospechoso) |
+---
 
-### Indicadores
+## Instalación y Ejecución
 
-Lista de indicadores detectados para la aplicación (si los hay).
+### Requisitos Previos
 
-### 📋 Requisitos Previos
-Antes de comenzar, asegúrate de tener instalado:
-- **Node.js**: v18 o superior.
-- **Java JDK**: 17 (Recomendado para React Native 0.76+).
-- **Android Studio**: Configurado con las herramientas de compilación y emulador.
+- **Node.js**: v18 o superior
+- **Java JDK**: 17 (Recomendado para React Native 0.76+)
+- **Android Studio**: Configurado con las herramientas de compilación y emulador
 
-### ⚙️ Configuración del Entorno (Windows)
+### Configuración del Entorno (Windows)
 
-#### 1. Variables de Envorno
-Es fundamental que tu sistema reconozca las herramientas de Android:
-- Define `ANDROID_HOME` apuntando a tu SDK (ej. `C:\Users\TU_USUARIO\AppData\Local\Android\Sdk`).
-- Añade a tu `Path` la carpeta `platform-tools` (ej. `%ANDROID_HOME%\platform-tools`).
+#### 1. Variables de Entorno
+
+Define `ANDROID_HOME` apuntando a tu SDK:
+
+```
+ANDROID_HOME = C:\Users\TU_USUARIO\AppData\Local\Android\Sdk
+```
+
+Añade a tu `Path` la carpeta `platform-tools`:
+
+```
+%ANDROID_HOME%\platform-tools
+```
 
 #### 2. Archivo `local.properties`
-Este proyecto requiere que el archivo `android/local.properties` exista y tenga la ruta correcta al SDK:
+
+Crea el archivo `android/local.properties` con la ruta al SDK:
+
 ```properties
 sdk.dir=C\:\\Users\\TU_USUARIO\\AppData\\Local\\Android\\Sdk
 ```
-*(Asegúrate de escapar los dos puntos `\:` y las barras invertidas `\\`).*
 
 #### 3. Arquitectura del Proyecto
-Para garantizar la compatibilidad con los módulos nativos personalizados (`AppDeviceInfo`), la **Nueva Arquitectura** de React Native 0.76 se encuentra **desactivada** en `android/gradle.properties`:
+
+La Nueva Arquitectura de React Native 0.76 se encuentra **desactivada** en `android/gradle.properties`:
+
 ```properties
 newArchEnabled=false
 ```
 
----
+### Ejecución
 
-## 🏃 Ejecución
+#### Paso 1: Instalar dependencias
 
-### Paso 1: Instalar dependencias
 ```bash
 npm install
 ```
 
-### Paso 2: Iniciar Metro Bundler
+#### Paso 2: Iniciar Metro Bundler
+
 En una terminal:
+
 ```bash
 npm start
 ```
 
-### Paso 3: Ejecutar en Android
+#### Paso 3: Ejecutar en Android
+
 En una segunda terminal (con emulador o celular conectado):
+
 ```bash
 npm run android
 ```
 
-## ⚠️ Solución de Problemas Comunes
+### Solución de Problemas
 
-### Error: `Address already in use :::8081`
-Si el puerto 8081 está ocupado, ejecuta en PowerShell para liberarlo:
+#### Error: `Address already in use :::8081`
+
 ```powershell
 Stop-Process -Id (Get-NetTCPConnection -LocalPort 8081).OwningProcess -Force
 ```
 
-### Error: `The package 'AppDeviceInfo' doesn't seem to be linked`
-Esto ocurre si intentas ejecutar la app sin haberla compilado después de cambios en Kotlin. Ejecuta:
+#### Error: `The package 'AppDeviceInfo' doesn't seem to be linked`
+
 ```bash
 cd android && ./gradlew clean && cd .. && npm run android
 ```
 
-### Error de validación en Reanimated (minimalReactNativeVersion = 78)
-Si reinstalas `node_modules`, es posible que Reanimated pida una versión de RN inexistente. Aplica este parche en PowerShell:
+#### Error de validación en Reanimated
+
 ```powershell
 (Get-Content node_modules/react-native-reanimated/android/build.gradle) -replace 'minimalReactNativeVersion = 78', 'minimalReactNativeVersion = 76' | Set-Content node_modules/react-native-reanimated/android/build.gradle
 ```
 
 ---
 
-## 🔒 Seguridad y Git
-El archivo `android/local.properties` y las carpetas de compilación están ignoradas en el `.gitignore` para evitar exponer rutas locales y mantener el repositorio ligero. No subas archivos `.keystore` al repositorio público.
+## Seguridad y Privacidad
+
+- **Análisis Offline:** Todos los datos se procesan localmente en el dispositivo.
+- **Sin Envío de Datos:** La app no envía información a servidores externos.
+- **Sin Modificación:** El análisis es pasivo y no modifica el sistema.
+- **Git Ignore:** El archivo `android/local.properties` y carpetas de compilación están ignoradas para evitar exponer rutas locales.
+
+---
+
+## Stack Tecnológico
+
+- **Frontend:** React Native 0.76 (TypeScript)
+- **Capa Nativa:** Custom Modules en Kotlin para acceso profundo a APIs de Android
+- **Arquitectura:** React Native Legacy Architecture (optimizado para compatibilidad con módulos nativos de seguridad)

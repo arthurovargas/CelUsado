@@ -1,5 +1,7 @@
 import React, {useMemo, useState} from 'react';
-import {View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView} from 'react-native';
+import {View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, Alert} from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import RNFS from 'react-native-fs';
 import {useRoute, useNavigation} from '@react-navigation/native';
 import type {RouteProp} from '@react-navigation/native';
 import type {RootStackParamList} from '../../types/navigation';
@@ -82,6 +84,61 @@ export const AppDetailScreen = () => {
   const {packageName} = route.params;
   const {result, controlResult, integrityResult} = useAnalysis();
   const [permissionsExpanded, setPermissionsExpanded] = useState(false);
+  const [copiedPackage, setCopiedPackage] = useState(false);
+  const [copiedReport, setCopiedReport] = useState(false);
+  const [savedPath, setSavedPath] = useState<string | null>(null);
+
+  const handleCopyPackage = () => {
+    Clipboard.setString(appScore?.packageName || '');
+    setCopiedPackage(true);
+    setTimeout(() => setCopiedPackage(false), 2000);
+  };
+
+  const generateReport = (): string => {
+    if (!appScore || !pkg) {
+      return '';
+    }
+    const lines: string[] = [];
+    lines.push('CELUSADO - REPORTE DE APLICACION');
+    lines.push('================================');
+    lines.push('');
+    lines.push(`Nombre: ${appScore.name}`);
+    lines.push(`Package: ${appScore.packageName}`);
+    lines.push('');
+    lines.push('--- PERMISOS DECLARADOS ---');
+    if (pkg.declaredPermissions.length === 0) {
+      lines.push('Sin permisos declarados.');
+    } else {
+      pkg.declaredPermissions.forEach((perm, idx) => {
+        lines.push(`${idx + 1}. ${perm}`);
+      });
+    }
+    lines.push('');
+    lines.push('================================');
+    lines.push('Generado por CelUsado');
+    return lines.join('\n');
+  };
+
+  const handleCopyReport = () => {
+    const report = generateReport();
+    Clipboard.setString(report);
+    setCopiedReport(true);
+    setTimeout(() => setCopiedReport(false), 2000);
+  };
+
+  const handleSaveReport = async () => {
+    try {
+      const report = generateReport();
+      const fileName = `${appScore?.packageName || 'app'}_report.txt`;
+      const downloadsPath = RNFS.DownloadDirectoryPath;
+      const filePath = `${downloadsPath}/${fileName}`;
+      await RNFS.writeFile(filePath, report, 'utf8');
+      setSavedPath(filePath);
+      setTimeout(() => setSavedPath(null), 3000);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo guardar el archivo.');
+    }
+  };
 
   const appScore = useMemo((): AppScore | null => {
     if (!result || !controlResult || !integrityResult) {
@@ -116,7 +173,11 @@ export const AppDetailScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.appName}>{appScore.name}</Text>
-          <Text style={styles.packageName}>{appScore.packageName}</Text>
+          <TouchableOpacity style={styles.packageRow} onPress={handleCopyPackage} activeOpacity={0.7}>
+            <Text style={styles.packageName}>{appScore.packageName}</Text>
+            <Text style={styles.copyIcon}>{copiedPackage ? '✓' : '⎘'}</Text>
+          </TouchableOpacity>
+          {copiedPackage && <Text style={styles.copiedText}>Copiado al portapapeles</Text>}
         </View>
 
         {/* Score */}
@@ -175,6 +236,19 @@ export const AppDetailScreen = () => {
             )}
           </TouchableOpacity>
         )}
+
+        {/* Report Buttons */}
+        <View style={styles.reportSection}>
+          <TouchableOpacity style={styles.reportButton} onPress={handleCopyReport} activeOpacity={0.7}>
+            <Text style={styles.reportButtonText}>Copiar reporte</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.reportButton, styles.reportButtonPrimary]} onPress={handleSaveReport} activeOpacity={0.7}>
+            <Text style={[styles.reportButtonText, styles.reportButtonTextPrimary]}>Guardar .txt</Text>
+          </TouchableOpacity>
+        </View>
+
+        {copiedReport && <Text style={styles.copiedText}>Copiado al portapapeles</Text>}
+        {savedPath && <Text style={styles.savedText}>Guardado: {savedPath}</Text>}
       </ScrollView>
     </SafeAreaView>
   );
@@ -234,9 +308,23 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.text,
   },
+  packageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 8,
+  },
   packageName: {
     fontSize: 13,
     color: colors.textMuted,
+  },
+  copyIcon: {
+    fontSize: 14,
+    color: '#3498DB',
+  },
+  copiedText: {
+    fontSize: 11,
+    color: '#27AE60',
     marginTop: 2,
   },
   scoreSection: {
@@ -357,6 +445,34 @@ const styles = StyleSheet.create({
   moreText: {
     fontSize: 12,
     color: '#3498DB',
+    marginTop: 8,
+  },
+  reportSection: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  reportButton: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  reportButtonPrimary: {
+    backgroundColor: '#3498DB',
+  },
+  reportButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  reportButtonTextPrimary: {
+    color: '#FFFFFF',
+  },
+  savedText: {
+    fontSize: 11,
+    color: '#27AE60',
     marginTop: 8,
   },
 });

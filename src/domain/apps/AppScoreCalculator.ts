@@ -135,18 +135,19 @@ function scoreFromPackage(pkg: NormalizedPackage): {score: number; factors: AppF
 }
 
 function scoreFromIntegrity(
-  packageName: string,
+  _packageName: string,
   integrity: IntegrityResult,
 ): {score: number; factors: AppFactor[]} {
   let score = 0;
   const factors: AppFactor[] = [];
 
-  if (packageName !== 'system') {
-    return {score, factors};
-  }
-
   for (const ind of integrity.indicators) {
     if (ind.status !== 'CONFIRMED' && ind.status !== 'ACTIVE') {
+      continue;
+    }
+
+    const alreadyHas = factors.some(f => f.label === ind.type);
+    if (alreadyHas) {
       continue;
     }
 
