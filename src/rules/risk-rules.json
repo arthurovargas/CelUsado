@@ -1,0 +1,137 @@
+[
+  {
+    "id": "ROOT_BINARY_DETECTED",
+    "name": "Binario de root detectado",
+    "description": "Se detectó un binario de root (su, suid) en el sistema",
+    "category": "ROOT_DETECTION",
+    "severity": "CRITICAL",
+    "weight": 40,
+    "enabled": true
+  },
+  {
+    "id": "ROOT_APP_DETECTED",
+    "name": "Aplicación de root detectada",
+    "description": "Se detectó una aplicación de root conocida (Magisk, SuperSU, etc.)",
+    "category": "ROOT_DETECTION",
+    "severity": "CRITICAL",
+    "weight": 35,
+    "enabled": true
+  },
+  {
+    "id": "TEST_KEYS_BUILD",
+    "name": "Build con test-keys",
+    "description": "El build del sistema usa test-keys en lugar de release-keys",
+    "category": "BUILD_ANOMALY",
+    "severity": "HIGH",
+    "weight": 25,
+    "enabled": true
+  },
+  {
+    "id": "CUSTOM_ROM_DETECTED",
+    "name": "ROM personalizada detectada",
+    "description": "El fingerprint del sistema coincide con una ROM personalizada conocida",
+    "category": "CUSTOM_ROM",
+    "severity": "HIGH",
+    "weight": 25,
+    "enabled": true
+  },
+  {
+    "id": "DEVICE_ADMIN_ACTIVE",
+    "name": "Administrador de dispositivo activo",
+    "description": "Hay un Device Administrator activo en el dispositivo",
+    "category": "ADMIN_CONTROL",
+    "severity": "MEDIUM",
+    "weight": 15,
+    "enabled": true
+  },
+  {
+    "id": "DEVICE_OWNER_ACTIVE",
+    "name": "Device Owner activo",
+    "description": "Una aplicación es Device Owner (control total del dispositivo)",
+    "category": "ADMIN_CONTROL",
+    "severity": "HIGH",
+    "weight": 30,
+    "enabled": true
+  },
+  {
+    "id": "PROFILE_OWNER_ACTIVE",
+    "name": "Profile Owner activo",
+    "description": "Una aplicación es Profile Owner (control de perfil)",
+    "category": "ADMIN_CONTROL",
+    "severity": "MEDIUM",
+    "weight": 20,
+    "enabled": true
+  },
+  {
+    "id": "KNOWN_MDM_DETECTED",
+    "name": "MDM conocido detectado",
+    "description": "Se detectó una aplicación de MDM conocida (Google Enterprise, Samsung Knox, etc.)",
+    "category": "KNOWN_MDM",
+    "severity": "HIGH",
+    "weight": 25,
+    "enabled": true
+  },
+  {
+    "id": "ACCESSIBILITY_SERVICE_ACTIVE",
+    "name": "Servicio de accesibilidad activo de terceros",
+    "description": "Un servicio de accesibilidad de terceros está habilitado",
+    "category": "ADMIN_CONTROL",
+    "severity": "MEDIUM",
+    "weight": 15,
+    "enabled": true
+  },
+  {
+    "id": "VPN_SERVICE_ACTIVE",
+    "name": "Servicio VPN activo",
+    "description": "Hay un servicio VPN activo que podría interceptar tráfico",
+    "category": "ADMIN_CONTROL",
+    "severity": "MEDIUM",
+    "weight": 10,
+    "enabled": true
+  },
+  {
+    "id": "OVERLAY_DETECTED",
+    "name": "Overlay de pantalla detectado",
+    "description": "Una aplicación tiene permiso de overlay (drawing over other apps)",
+    "category": "SUSPICIOUS_PERMISSIONS",
+    "severity": "MEDIUM",
+    "weight": 10,
+    "enabled": true
+  },
+  {
+    "id": "MODIFICATION_FRAMEWORK",
+    "name": "Framework de modificación detectado",
+    "description": "Se detectó un framework de modificación (Xposed, LSPosed, etc.)",
+    "category": "MODIFICATION_FRAMEWORK",
+    "severity": "CRITICAL",
+    "weight": 35,
+    "enabled": true
+  },
+  {
+    "id": "SECURITY_PATCH_STALE",
+    "name": "Parche de seguridad obsoleto",
+    "description": "El parche de seguridad tiene más de 90 días de antigüedad",
+    "category": "SECURITY_PATCH_STALE",
+    "severity": "MEDIUM",
+    "weight": 10,
+    "enabled": true
+  },
+  {
+    "id": "BOOTLOADER_UNLOCKED",
+    "name": "Bootloader desbloqueado",
+    "description": "El bootloader está en estado desbloqueado o desconocido",
+    "category": "INTEGRITY_COMPROMISE",
+    "severity": "HIGH",
+    "weight": 20,
+    "enabled": true
+  },
+  {
+    "id": "VERIFIED_BOOT_FAIL",
+    "name": "Verified Boot fallido",
+    "description": "El estado de Verified Boot indica verificación fallida",
+    "category": "INTEGRITY_COMPROMISE",
+    "severity": "HIGH",
+    "weight": 25,
+    "enabled": true
+  }
+]

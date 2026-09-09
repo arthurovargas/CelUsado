@@ -11,12 +11,16 @@ export const AppNavigator = () => {
     <Stack.Navigator
       initialRouteName="Main"
       screenOptions={{
-        headerStyle: {backgroundColor: '#FFFFFF'},
-        headerTintColor: '#1A1A2E',
-        headerTitleStyle: {fontWeight: '600'},
-        contentStyle: {backgroundColor: '#F5F5F5'},
+        headerStyle: {backgroundColor: '#16213E'},
+        headerTintColor: '#FFFFFF',
+        headerTitleStyle: {fontWeight: '600', color: '#FFFFFF'},
+        contentStyle: {backgroundColor: '#1A1A2E'},
       }}>
-      <Stack.Screen name="Main" component={MainScreen} options={{title: 'CelUsado'}} />
+      <Stack.Screen
+        name="Main"
+        component={MainScreen}
+        options={{headerShown: false}}
+      />
       <Stack.Screen
         name="AppDetail"
         component={AppDetailScreen}

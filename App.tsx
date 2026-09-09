@@ -12,7 +12,7 @@ const App = () => {
       <SafeAreaProvider>
         <AnalysisProvider>
           <NavigationContainer>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <StatusBar barStyle="light-content" backgroundColor="#1A1A2E" />
             <AppNavigator />
           </NavigationContainer>
         </AnalysisProvider>

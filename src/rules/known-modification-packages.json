@@ -1,0 +1,42 @@
+{
+  "version": "1.0.0",
+  "description": "Known modification framework packages",
+  "packages": [
+    {
+      "pattern": "xposed",
+      "category": "XPOSED",
+      "confidence": 0.85,
+      "description": "Xposed Framework"
+    },
+    {
+      "pattern": "lsposed",
+      "category": "LSPosed",
+      "confidence": 0.85,
+      "description": "LSPosed Framework"
+    },
+    {
+      "pattern": "riru",
+      "category": "RIRU",
+      "confidence": 0.85,
+      "description": "Riru Module"
+    },
+    {
+      "pattern": "zygisk",
+      "category": "ZYGISK",
+      "confidence": 0.85,
+      "description": "Zygisk Module"
+    },
+    {
+      "pattern": "shamiko",
+      "category": "SHAMIKO",
+      "confidence": 0.85,
+      "description": "Shamiko Root Hider"
+    },
+    {
+      "pattern": "busybox",
+      "category": "BUSYBOX",
+      "confidence": 0.75,
+      "description": "BusyBox (root tool)"
+    }
+  ]
+}

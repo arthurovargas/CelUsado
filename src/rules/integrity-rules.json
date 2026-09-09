@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "description": "Integrity analysis rules",
+  "rules": {
+    "securityPatch": {
+      "thresholdDays": 90,
+      "description": "Security patches older than this threshold are flagged"
+    },
+    "confidenceThresholds": {
+      "buildTestKeys": 0.98,
+      "buildUserdebug": 0.95,
+      "buildEngineering": 0.98,
+      "rootBinary": 0.90,
+      "rootApp": 0.85,
+      "customRom": 0.80,
+      "bootloaderInferred": 0.70,
+      "verifiedBootProperty": 0.75
+    },
+    "interpretation": {
+      "singleIndicator": "INDICATOR",
+      "multipleIndicators": "MULTIPLE_INDICATORS",
+      "noIndicators": "NORMAL",
+      "note": "Individual indicators should NEVER be interpreted as ROOT_CONFIRMED or DEVICE_COMPROMISED"
+    }
+  }
+}

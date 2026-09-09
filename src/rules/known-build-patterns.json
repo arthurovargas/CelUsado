@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "description": "Known build patterns indicating custom ROMs or modifications",
+  "patterns": [
+    {
+      "pattern": "lineage",
+      "name": "LineageOS",
+      "confidence": 0.80
+    },
+    {
+      "pattern": "cyanogenmod",
+      "name": "CyanogenMod",
+      "confidence": 0.80
+    },
+    {
+      "pattern": "paranoid",
+      "name": "Paranoid Android",
+      "confidence": 0.80
+    },
+    {
+      "pattern": "resurrection",
+      "name": "Resurrection Remix",
+      "confidence": 0.80
+    },
+    {
+      "pattern": "crdroid",
+      "name": "crDroid",
+      "confidence": 0.80
+    },
+    {
+      "pattern": "pixel",
+      "name": "PixelExperience",
+      "confidence": 0.70
+    },
+    {
+      "pattern": "arrowos",
+      "name": "ArrowOS",
+      "confidence": 0.80
+    },
+    {
+      "pattern": "havoc",
+      "name": "Havoc-OS",
+      "confidence": 0.80
+    },
+    {
+      "pattern": "evolution",
+      "name": "Evolution-X",
+      "confidence": 0.80
+    }
+  ]
+}

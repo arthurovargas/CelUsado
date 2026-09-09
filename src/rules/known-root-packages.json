@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "description": "Known root-related packages for integrity analysis",
+  "packages": [
+    {
+      "pattern": "com.topjohnwu.magisk",
+      "category": "MAGISK",
+      "confidence": 0.95,
+      "description": "Magisk root framework"
+    },
+    {
+      "pattern": "com.koushikdutta.superuser",
+      "category": "SUPERUSER",
+      "confidence": 0.90,
+      "description": "Superuser management"
+    },
+    {
+      "pattern": "eu.chainfire.supersu",
+      "category": "SUPERSU",
+      "confidence": 0.90,
+      "description": "SuperSU root management"
+    },
+    {
+      "pattern": "com.noshufou.android.su",
+      "category": "SU_MANAGER",
+      "confidence": 0.90,
+      "description": "SU Manager"
+    },
+    {
+      "pattern": "com.kingroot.kinguser",
+      "category": "KINGROOT",
+      "confidence": 0.90,
+      "description": "KingRoot"
+    },
+    {
+      "pattern": "com.kingo.root",
+      "category": "KINGO_ROOT",
+      "confidence": 0.90,
+      "description": "Kingo Root"
+    },
+    {
+      "pattern": "com.devadvance.rootcloak",
+      "category": "ROOT_CLOAK",
+      "confidence": 0.85,
+      "description": "Root Cloak"
+    },
+    {
+      "pattern": "com.saurik.substrate",
+      "category": "SUBSTRATE",
+      "confidence": 0.85,
+      "description": "Cydia Substrate"
+    },
+    {
+      "pattern": "org.meowmu.edxposed",
+      "category": "EDXPOSED",
+      "confidence": 0.85,
+      "description": "EdXposed Framework"
+    },
+    {
+      "pattern": "com.topjohnwu.magisk.manager",
+      "category": "MAGISK_MANAGER",
+      "confidence": 0.95,
+      "description": "Magisk Manager"
+    }
+  ]
+}
