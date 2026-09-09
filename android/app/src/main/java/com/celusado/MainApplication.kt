@@ -13,6 +13,7 @@ import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.celusado.modules.DeviceInfoPackage
 import com.celusado.modules.packageanalyzer.PackageAnalyzerPackage
 import com.celusado.modules.devicecontrol.DeviceControlPackage
+import com.celusado.modules.integrity.IntegrityPackage
 import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
@@ -25,6 +26,7 @@ class MainApplication : Application(), ReactApplication {
               add(DeviceInfoPackage())
               add(PackageAnalyzerPackage())
               add(DeviceControlPackage())
+              add(IntegrityPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

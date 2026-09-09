@@ -1744,128 +1744,1434 @@ No avanzar automáticamente al siguiente checkpoint hasta que el checkpoint actu
 
 ---
 
-# 10. Fase 5 — Integridad del dispositivo
+# 10. Fase 5 — Análisis de integridad del dispositivo
 
 ## Objetivo
 
-Añadir señales de modificación del sistema.
+Construir el módulo encargado de recopilar y analizar **señales técnicas relacionadas con la integridad, modificación y estado de seguridad del sistema Android**.
 
-### Investigar/detectar
+La Fase 5 debe determinar:
 
-- root
-- bootloader
-- Play Integrity
-- build/test keys
-- modificaciones conocidas
-- aplicaciones de root
-- estado de Verified Boot cuando sea accesible
+* qué señales de integridad pueden observarse;
+* qué señales indican una configuración no estándar;
+* qué señales son compatibles con bootloader desbloqueado o Verified Boot no verificado;
+* qué señales pueden ser compatibles con root o modificaciones del sistema;
+* qué información puede obtenerse mediante Play Integrity;
+* qué información no puede determinar una aplicación Android normal;
+* qué evidencias respaldan cada conclusión.
 
-### Importante
+La Fase 5 **NO debe afirmar automáticamente que un dispositivo está rooteado, modificado, comprometido o inseguro a partir de una sola señal**.
 
-Una señal individual no debe considerarse prueba definitiva.
+Debe seguir el mismo principio utilizado en las Fases 3 y 4:
+
+```text
+RECOLECCIÓN
+    ↓
+NORMALIZACIÓN
+    ↓
+ANÁLISIS
+    ↓
+EVIDENCIA
+    ↓
+INTERPRETACIÓN
+    ↓
+LIMITACIONES
+```
+
+---
+
+# 5.1 Dependencia de fases anteriores
+
+La Fase 5 debe integrarse con:
+
+```text
+Phase 2
+DeviceInfoAnalyzer
+        │
+        ▼
+Phase 3
+PackageAnalyzer
+        │
+        ▼
+Phase 4
+DeviceControlAnalyzer
+        │
+        ▼
+Phase 5
+IntegrityAnalyzer
+```
+
+No duplicar innecesariamente la lógica de las Fases 2, 3 y 4.
+
+La Fase 5 debe reutilizar:
+
+* información del dispositivo;
+* SDK/API level;
+* build information;
+* paquetes observados;
+* clasificación de aplicaciones;
+* firmas;
+* componentes;
+* evidencias;
+* indicadores administrativos.
+
+---
+
+# 5.2 Arquitectura
+
+Crear un módulo separado:
+
+```text
+IntegrityAnalyzer
+│
+├── BuildIntegrityAnalyzer
+│
+├── RootIndicatorAnalyzer
+│
+├── BootIntegrityAnalyzer
+│
+├── SecurityPatchAnalyzer
+│
+├── KnownModificationAnalyzer
+│
+├── RootAppAnalyzer
+│
+├── PlayIntegrityAnalyzer
+│
+├── KeyAttestationAnalyzer
+│
+├── IntegrityIndicatorBuilder
+│
+└── IntegrityEvidenceBuilder
+```
+
+La implementación puede adaptar estos nombres a la arquitectura real del proyecto, pero debe conservar la separación de responsabilidades.
+
+---
+
+# 5.3 Principio fundamental: señal ≠ conclusión
+
+Toda señal debe almacenarse individualmente.
 
 Ejemplo:
 
-```text
-user/test-keys
+```json
+{
+  "type": "BUILD_TAG",
+  "value": "test-keys",
+  "status": "DETECTED",
+  "confidence": 0.95
+}
 ```
 
-debe aparecer como:
-
-```text
-⚠ Indicador de configuración/build no estándar
-```
-
-y no automáticamente como:
+Esto NO debe transformarse automáticamente en:
 
 ```text
 ROOT DETECTADO
 ```
 
+Debe interpretarse como:
+
+```text
+Indicador de build/configuración no estándar
+```
+
+Una conclusión más fuerte solamente podrá generarse cuando existan varias evidencias independientes y suficientes.
+
+---
+
+# 5.4 Modelo de estados
+
+Utilizar estados explícitos.
+
+Como mínimo:
+
+```text
+DETECTED
+NOT_DETECTED
+NOT_ACCESSIBLE
+NOT_AVAILABLE
+NOT_SUPPORTED
+NOT_DETERMINABLE
+ERROR
+```
+
+No utilizar:
+
+```text
+false
+```
+
+cuando realmente significa:
+
+```text
+la aplicación no pudo determinarlo
+```
+
+Ejemplo:
+
+```json
+{
+  "type": "BOOTLOADER_STATE",
+  "status": "NOT_DETERMINABLE",
+  "confidence": 0.0,
+  "limitations": [
+    "No existe una API pública fiable disponible para determinar directamente el estado del bootloader desde una aplicación normal."
+  ]
+}
+```
+
+---
+
+# 5.5 Modelo de evidencia
+
+Todas las señales deben utilizar un modelo común.
+
+Ejemplo:
+
+```json
+{
+  "type": "BUILD_TEST_KEYS",
+  "status": "DETECTED",
+  "confidence": 0.98,
+  "value": "test-keys",
+  "source": "Build.TAGS",
+  "evidence": [
+    {
+      "source": "ANDROID_BUILD",
+      "field": "Build.TAGS",
+      "value": "release-keys,test-keys"
+    }
+  ],
+  "limitations": []
+}
+```
+
+Cada evidencia debe indicar:
+
+```text
+type
+status
+confidence
+source
+value
+evidence
+limitations
+```
+
+---
+
+# 5.6 Build Integrity Analyzer
+
+Analizar información pública de:
+
+```text
+Build
+Build.VERSION
+Build.FINGERPRINT
+Build.TAGS
+Build.TYPE
+Build.DISPLAY
+Build.ID
+Build.HARDWARE
+Build.BOARD
+Build.MANUFACTURER
+Build.BRAND
+Build.DEVICE
+Build.PRODUCT
+```
+
+No asumir que todas las propiedades son fiables como prueba de seguridad.
+
+### Indicadores
+
+Detectar, cuando estén disponibles:
+
+* `test-keys`;
+* builds de ingeniería;
+* builds de usuario-debug;
+* fingerprints no estándar;
+* configuraciones de desarrollo;
+* información inconsistente entre propiedades;
+* valores claramente asociados con imágenes de prueba.
+
+Ejemplo:
+
+```text
+Build.TAGS = release-keys
+```
+
+→
+
+```text
+NORMAL
+```
+
+Ejemplo:
+
+```text
+Build.TAGS = test-keys
+```
+
+→
+
+```text
+INDICATOR_BUILD_NOT_STANDARD
+```
+
+No concluir:
+
+```text
+ROOT
+```
+
+---
+
+# 5.7 Root Indicator Analyzer
+
+Implementar detección heurística de indicadores relacionados con root.
+
+La finalidad es detectar:
+
+```text
+INDICADORES COMPATIBLES CON ROOT
+```
+
+y no demostrar de manera absoluta:
+
+```text
+ROOT CONFIRMADO
+```
+
+### Posibles señales
+
+Investigar y detectar, cuando sea técnicamente posible:
+
+* binarios conocidos relacionados con `su`;
+* rutas conocidas asociadas con herramientas de root;
+* aplicaciones conocidas relacionadas con root;
+* paquetes conocidos;
+* indicadores de modificaciones del sistema;
+* builds de desarrollo;
+* inconsistencias de integridad;
+* otros indicadores técnicamente justificables.
+
+No utilizar una única señal como prueba definitiva.
+
+---
+
+# 5.8 Root App Analyzer
+
+Utilizar la información obtenida por Phase 3.
+
+Buscar aplicaciones que puedan estar relacionadas con:
+
+* administración de root;
+* gestión de módulos;
+* modificación del sistema;
+* herramientas de superusuario;
+* frameworks de modificación conocidos.
+
+No clasificar automáticamente estas aplicaciones como malware.
+
+Ejemplo:
+
+```json
+{
+  "type": "ROOT_MANAGEMENT_APP",
+  "status": "DETECTED",
+  "packageName": "com.example.rootmanager",
+  "confidence": 0.92
+}
+```
+
+La aplicación debe explicar:
+
+```text
+Se detectó una aplicación compatible con herramientas de modificación/administración avanzada del sistema.
+```
+
+No:
+
+```text
+El teléfono está rooteado.
+```
+
+---
+
+# 5.9 Boot Integrity Analyzer
+
+Analizar las señales disponibles relacionadas con:
+
+```text
+Verified Boot
+bootloader
+device locked state
+verified boot state
+```
+
+Debe distinguir claramente:
+
+```text
+BOOTLOADER_STATE
+VERIFIED_BOOT_STATE
+DEVICE_LOCKED
+```
+
+No asumir que una aplicación normal puede consultar directamente el bootloader.
+
+Si el estado no puede determinarse:
+
+```json
+{
+  "type": "BOOTLOADER_STATE",
+  "status": "NOT_DETERMINABLE",
+  "confidence": 0.0
+}
+```
+
+No utilizar comandos shell no documentados como mecanismo principal de detección.
+
+No asumir que:
+
+```text
+ro.boot.verifiedbootstate
+```
+
+puede ser leído de forma fiable por cualquier aplicación normal.
+
+---
+
+# 5.10 Verified Boot
+
+Cuando exista una fuente fiable de evidencia, registrar:
+
+```text
+Verified
+SelfSigned
+Unverified
+Failed
+```
+
+No convertir:
+
+```text
+SelfSigned
+```
+
+o:
+
+```text
+Unverified
+```
+
+automáticamente en:
+
+```text
+ROOT
+```
+
+La interpretación debe ser:
+
+```text
+El estado de Verified Boot no corresponde al estado estándar esperado de una cadena de confianza completa.
+```
+
+Cuando la información proceda de una fuente criptográficamente verificable, registrar la fuente y el método de validación.
+
+---
+
+# 5.11 Key Attestation
+
+Investigar e implementar, si la arquitectura actual lo permite, una comprobación basada en Android Key Attestation.
+
+La finalidad es obtener evidencia relacionada con:
+
+```text
+RootOfTrust
+deviceLocked
+verifiedBootState
+verifiedBootKey
+```
+
+La implementación debe diferenciar:
+
+```text
+KEY_ATTESTATION_AVAILABLE
+KEY_ATTESTATION_UNAVAILABLE
+KEY_ATTESTATION_FAILED
+KEY_ATTESTATION_VERIFIED
+```
+
+La información de attestation no debe considerarse válida solamente porque el dispositivo la entregue.
+
+Cuando sea necesario:
+
+```text
+generación de clave
+        ↓
+obtención de certificado
+        ↓
+validación criptográfica
+        ↓
+análisis de RootOfTrust
+```
+
+La validación criptográfica debe realizarse de forma segura.
+
+No implementar una falsa validación local basada únicamente en leer campos sin verificar la cadena de certificados.
+
+Si la implementación completa requiere backend, dejar la arquitectura preparada pero registrar claramente:
+
+```text
+NOT_AVAILABLE_WITHOUT_BACKEND
+```
+
+en lugar de simular el resultado.
+
+---
+
+# 5.12 Security Patch Analyzer
+
+Analizar:
+
+```text
+Build.VERSION.SECURITY_PATCH
+```
+
+Registrar:
+
+```json
+{
+  "type": "SECURITY_PATCH_LEVEL",
+  "status": "DETECTED",
+  "value": "2026-08-01",
+  "source": "Build.VERSION.SECURITY_PATCH"
+}
+```
+
+Cuando esté disponible según la versión de Android, evaluar también información adicional de seguridad proporcionada por:
+
+```text
+SecurityStateManager
+```
+
+No determinar por sí solo que un teléfono es inseguro solamente porque tenga un parche antiguo.
+
+Debe presentarse como:
+
+```text
+SECURITY_PATCH_OLD
+```
+
+o un indicador equivalente.
+
+La comparación contra una fecha actual debe pertenecer a reglas versionadas, no estar hardcodeada dentro del analizador.
+
+---
+
+# 5.13 Known Modification Analyzer
+
+Crear un analizador para detectar indicadores conocidos de modificación del sistema.
+
+Ejemplos:
+
+```text
+custom ROM indicators
+engineering build
+debug build
+test keys
+known modification frameworks
+root management applications
+unexpected system package changes
+```
+
+Las listas deben mantenerse separadas de la lógica de detección.
+
+Ejemplo:
+
+```text
+rules/
+├── known-root-packages.json
+├── known-modification-packages.json
+├── known-build-patterns.json
+└── integrity-rules.json
+```
+
+Las reglas deben poder actualizarse sin modificar el núcleo del analizador.
+
+---
+
+# 5.14 Play Integrity Analyzer
+
+Integrar Play Integrity como **fuente independiente de evidencia**.
+
+No mezclar:
+
+```text
+Play Integrity
+```
+
+con:
+
+```text
+detección local de root
+```
+
+La respuesta debe almacenarse por separado.
+
+Analizar, cuando esté disponible:
+
+```text
+MEETS_BASIC_INTEGRITY
+MEETS_DEVICE_INTEGRITY
+MEETS_STRONG_INTEGRITY
+```
+
+y otros veredictos relevantes proporcionados por la API utilizada.
+
+La aplicación debe registrar:
+
+```json
+{
+  "type": "PLAY_INTEGRITY",
+  "status": "DETECTED",
+  "verdicts": [
+    "MEETS_DEVICE_INTEGRITY"
+  ],
+  "source": "PLAY_INTEGRITY"
+}
+```
+
+No transformar automáticamente:
+
+```text
+MEETS_DEVICE_INTEGRITY
+```
+
+en:
+
+```text
+ROOT = false
+```
+
+ni:
+
+```text
+NO ROOT
+```
+
+Los resultados de Play Integrity deben interpretarse como evidencia de integridad/certificación dentro de las condiciones y limitaciones de dicha API.
+
+---
+
+# 5.15 Play Integrity y backend
+
+Antes de implementar una integración completa con Play Integrity, determinar si la arquitectura actual permite:
+
+```text
+App
+ ↓
+Play Integrity
+ ↓
+Integrity token
+ ↓
+Backend
+ ↓
+Google
+ ↓
+verificación
+ ↓
+resultado
+```
+
+No almacenar ni aceptar como confiable un token sin verificarlo correctamente.
+
+Si el proyecto actual es exclusivamente local:
+
+```text
+NO IMPLEMENTAR BACKEND ARTIFICIAL
+```
+
+En su lugar:
+
+```text
+PlayIntegrityAnalyzer
+    ↓
+NOT_AVAILABLE
+```
+
+o:
+
+```text
+AVAILABLE_BUT_REQUIRES_BACKEND
+```
+
+según corresponda.
+
+La Fase 5 debe quedar preparada para incorporar Play Integrity posteriormente sin alterar el modelo de evidencias.
+
+---
+
+# 5.16 Consolidación de indicadores
+
+Crear `IntegrityIndicatorBuilder`.
+
+Debe combinar las señales individuales sin convertirlas automáticamente en conclusiones absolutas.
+
+Ejemplo:
+
+```json
+{
+  "indicators": [
+    {
+      "type": "BUILD_TEST_KEYS",
+      "status": "DETECTED",
+      "confidence": 0.98
+    },
+    {
+      "type": "ROOT_MANAGEMENT_APP",
+      "status": "DETECTED",
+      "confidence": 0.90
+    },
+    {
+      "type": "BOOTLOADER_STATE",
+      "status": "NOT_DETERMINABLE",
+      "confidence": 0.0
+    }
+  ]
+}
+```
+
+---
+
+# 5.17 Nivel de interpretación
+
+La Fase 5 puede producir una interpretación técnica, pero no un Risk Score definitivo.
+
+Utilizar categorías como:
+
+```text
+NORMAL
+INDICATOR
+MULTIPLE_INDICATORS
+STRONG_INTEGRITY_EVIDENCE
+INTEGRITY_COMPROMISED_INDICATOR
+NOT_DETERMINABLE
+```
+
+Evitar:
+
+```text
+SAFE
+UNSAFE
+STOLEN
+FINANCED
+MALICIOUS
+```
+
+Estas conclusiones no corresponden a esta fase.
+
+---
+
+# 5.18 Confidence
+
+Cada indicador debe incluir confidence.
+
+Ejemplo:
+
+```json
+{
+  "type": "BUILD_TEST_KEYS",
+  "confidence": 0.98
+}
+```
+
+La confianza debe representar:
+
+```text
+confianza en la evidencia detectada
+```
+
+y no:
+
+```text
+probabilidad de que el teléfono esté rooteado
+```
+
+Por ejemplo:
+
+```text
+test-keys detectado
+```
+
+puede tener:
+
+```text
+confidence = 0.98
+```
+
+pero la conclusión:
+
+```text
+root confirmado
+```
+
+no debe generarse solamente a partir de esa evidencia.
+
+---
+
+# 5.19 Cobertura y limitaciones
+
+Crear un objeto de cobertura similar al utilizado en Phase 3 y Phase 4.
+
+Ejemplo:
+
+```json
+{
+  "coverage": "PARTIAL",
+  "availableChecks": [
+    "BUILD_PROPERTIES",
+    "SECURITY_PATCH",
+    "ROOT_APP_INDICATORS"
+  ],
+  "unavailableChecks": [
+    "DIRECT_BOOTLOADER_STATE"
+  ],
+  "limitations": [
+    "Una aplicación Android normal no puede determinar de forma fiable todos los estados internos del bootloader.",
+    "La validación completa de Play Integrity puede requerir backend.",
+    "Los indicadores de root son heurísticos."
+  ]
+}
+```
+
+Estados:
+
+```text
+COMPLETE
+PARTIAL
+LIMITED
+UNKNOWN
+```
+
+---
+
+# 5.20 Integración con el modelo global
+
+La salida de Phase 5 debe integrarse con el resultado general del diagnóstico.
+
+Flujo:
+
+```text
+DeviceInfo
+     │
+     ▼
+Applications
+     │
+     ▼
+DeviceControl
+     │
+     ▼
+Integrity
+     │
+     ▼
+Evidence
+     │
+     ▼
+Global Diagnostic Model
+```
+
+No modificar innecesariamente las salidas ya implementadas de Phase 3 y Phase 4.
+
+Añadir únicamente los nuevos indicadores de integridad.
+
+---
+
+# 5.21 Modelo final de salida
+
+Crear una estructura equivalente a:
+
+```json
+{
+  "integrity": {
+    "overallStatus": "MULTIPLE_INDICATORS",
+
+    "indicators": [
+      {
+        "type": "BUILD_TEST_KEYS",
+        "status": "DETECTED",
+        "confidence": 0.98,
+        "source": "Build.TAGS",
+        "value": "test-keys"
+      },
+      {
+        "type": "SECURITY_PATCH_LEVEL",
+        "status": "DETECTED",
+        "confidence": 1.0,
+        "source": "Build.VERSION.SECURITY_PATCH",
+        "value": "2026-08-01"
+      },
+      {
+        "type": "BOOTLOADER_STATE",
+        "status": "NOT_DETERMINABLE",
+        "confidence": 0.0
+      }
+    ],
+
+    "coverage": {
+      "status": "PARTIAL"
+    },
+
+    "limitations": [
+      "Bootloader state cannot be directly determined through a guaranteed public API.",
+      "Root detection is heuristic.",
+      "Play Integrity requires appropriate validation."
+    ]
+  }
+}
+```
+
+---
+
+# 5.22 Casos de prueba
+
+Crear pruebas unitarias para cada tipo de evidencia.
+
+Como mínimo:
+
+### Caso A — teléfono estándar
+
+```text
+release build
+release-keys
+sin indicadores conocidos
+```
+
+Esperado:
+
+```text
+sin indicadores relevantes
+```
+
+### Caso B — test keys
+
+```text
+Build.TAGS = test-keys
+```
+
+Esperado:
+
+```text
+BUILD_TEST_KEYS = DETECTED
+```
+
+No:
+
+```text
+ROOT = CONFIRMED
+```
+
+### Caso C — aplicación relacionada con root
+
+Esperado:
+
+```text
+ROOT_MANAGEMENT_APP = DETECTED
+```
+
+No:
+
+```text
+ROOT_CONFIRMED
+```
+
+### Caso D — múltiples indicadores
+
+Por ejemplo:
+
+```text
+test-keys
++
+root management app
++
+otra evidencia independiente
+```
+
+Esperado:
+
+```text
+MULTIPLE_INDICATORS
+```
+
+### Caso E — bootloader no determinable
+
+Esperado:
+
+```text
+BOOTLOADER_STATE = NOT_DETERMINABLE
+```
+
+No:
+
+```text
+BOOTLOADER_LOCKED = false
+```
+
+### Caso F — Verified Boot
+
+Probar estados:
+
+```text
+Verified
+SelfSigned
+Unverified
+Failed
+```
+
+Cada estado debe generar una evidencia diferente.
+
+### Caso G — Play Integrity
+
+Probar:
+
+```text
+MEETS_BASIC_INTEGRITY
+MEETS_DEVICE_INTEGRITY
+MEETS_STRONG_INTEGRITY
+```
+
+y verificar que no se transformen automáticamente en conclusiones de root.
+
+### Caso H — Security Patch
+
+Probar:
+
+```text
+SECURITY_PATCH disponible
+SECURITY_PATCH no disponible
+```
+
+### Caso I — información insuficiente
+
+Forzar errores o APIs no disponibles.
+
+Esperado:
+
+```text
+NOT_AVAILABLE
+NOT_ACCESSIBLE
+NOT_DETERMINABLE
+```
+
+según corresponda.
+
+---
+
+# 5.23 PoC en dispositivo físico
+
+Antes de considerar terminada la Fase 5, ejecutar una PoC en al menos un dispositivo físico real.
+
+Registrar:
+
+```text
+1. Build information
+2. Build tags
+3. Build type
+4. Build fingerprint
+5. Security patch
+6. paquetes relacionados con root
+7. indicadores de modificación
+8. Verified Boot cuando esté disponible
+9. Key Attestation cuando esté disponible
+10. Play Integrity cuando esté disponible
+11. limitaciones
+```
+
+La PoC debe generar un JSON reproducible.
+
+Ejemplo:
+
+```text
+docs/poc/integrity-device.json
+```
+
+---
+
+# 5.24 Compatibilidad por versión
+
+Mantener una matriz:
+
+```text
+Función | Android | API | Disponible | Permiso/Rol | Limitación
+```
+
+Incluir como mínimo:
+
+```text
+Build.VERSION
+Build.TAGS
+Build.FINGERPRINT
+SecurityStateManager
+Key Attestation
+Play Integrity
+Verified Boot
+```
+
+No asumir que una API disponible en una versión puede utilizarse en todas las versiones objetivo.
+
+Utilizar comprobaciones por API level cuando corresponda.
+
+---
+
+# 5.25 Checkpoints de implementación
+
+Implementar la Fase 5 mediante checkpoints:
+
+```text
+5.1 Arquitectura e integración
+        ↓
+5.2 Modelo de evidencia
+        ↓
+5.3 Build Integrity
+        ↓
+5.4 Security Patch
+        ↓
+5.5 Root Indicators
+        ↓
+5.6 Root Apps
+        ↓
+5.7 Boot Integrity
+        ↓
+5.8 Key Attestation
+        ↓
+5.9 Play Integrity
+        ↓
+5.10 Known Modifications
+        ↓
+5.11 Indicator Builder
+        ↓
+5.12 Coverage & Limitations
+        ↓
+5.13 Integración global
+        ↓
+5.14 Tests
+        ↓
+5.15 PoC física
+```
+
+---
+
+# 5.26 Regla de ejecución para OpenCode
+
+Lee y comprende **toda la especificación de la Fase 5 antes de comenzar a implementar**.
+
+La implementación debe realizarse de manera incremental y secuencial mediante checkpoints, pero **no es necesario detenerse después de cada checkpoint**.
+
+Utiliza el siguiente flujo:
+
+```text
+checkpoint
+    ↓
+implementar
+    ↓
+compilar
+    ↓
+ejecutar pruebas
+    ↓
+verificar regresiones
+    ↓
+documentar limitaciones
+    ↓
+continuar automáticamente
+```
+
+Cada checkpoint funciona como una **barrera de calidad**, no como una pausa obligatoria.
+
+Si un checkpoint falla:
+
+```text
+detectar problema
+    ↓
+corregir
+    ↓
+compilar
+    ↓
+repetir pruebas
+    ↓
+continuar
+```
+
+No avanzar dejando errores conocidos.
+
+### Detenerse y solicitar intervención únicamente si existe:
+
+* bloqueo técnico real;
+* contradicción entre la especificación y las APIs disponibles;
+* decisión arquitectónica que no pueda resolverse de forma segura;
+* API inexistente o comportamiento que no pueda verificarse;
+* regresión importante en Fases 3 o 4;
+* imposibilidad de implementar una función sin realizar afirmaciones falsas;
+* necesidad de credenciales, configuración externa o backend que no exista actualmente.
+
+No detenerse simplemente porque una API tenga limitaciones.
+
+En esos casos:
+
+```text
+implementar la parte verificable
++
+marcar la parte restante como NOT_AVAILABLE,
+NOT_ACCESSIBLE o NOT_DETERMINABLE
+```
+
+según corresponda.
+
+---
+
+# 5.27 Restricciones
+
+No:
+
+```text
+✗ afirmar ROOT únicamente por test-keys
+✗ afirmar ROOT por una sola aplicación instalada
+✗ afirmar bootloader desbloqueado sin evidencia suficiente
+✗ afirmar dispositivo comprometido sin evidencia
+✗ convertir ausencia de evidencia en evidencia de ausencia
+✗ utilizar APIs privadas como si fueran APIs públicas
+✗ depender de comandos shell no garantizados
+✗ inventar estados de Play Integrity
+✗ simular resultados de Key Attestation
+✗ crear un Risk Score definitivo
+✗ declarar el teléfono robado
+✗ declarar el teléfono financiado
+✗ declarar el teléfono bloqueado
+```
+
+Sí:
+
+```text
+✓ recolectar señales
+✓ registrar evidencia
+✓ asignar confidence
+✓ diferenciar estados
+✓ documentar limitaciones
+✓ utilizar APIs públicas
+✓ separar detección de interpretación
+✓ conservar trazabilidad
+✓ mantener compatibilidad Android 13+
+✓ evitar regresiones
+```
+
+---
+
+# 5.28 Criterios de finalización
+
+La Fase 5 estará terminada cuando:
+
+```text
+✓ IntegrityAnalyzer implementado
+✓ Build Integrity implementado
+✓ Security Patch implementado
+✓ Root indicators implementados
+✓ Root app indicators implementados
+✓ Boot Integrity implementado hasta donde permitan las APIs
+✓ Key Attestation implementado o correctamente marcado como no disponible
+✓ Play Integrity integrado o correctamente preparado para integración futura
+✓ Known Modification Analyzer implementado
+✓ Evidence model integrado
+✓ Confidence implementado
+✓ Coverage implementado
+✓ Limitations implementadas
+✓ Tests ejecutados
+✓ PoC ejecutada en dispositivo físico
+✓ Build Android exitoso
+✓ No existen regresiones conocidas en Fases 3 y 4
+✓ No existen conclusiones de seguridad basadas en una sola señal
+```
+
+---
+
+# Resultado esperado
+
+Al finalizar la Fase 5, el sistema debe poder responder:
+
+> **¿Qué señales relacionadas con la integridad y modificación del sistema Android pueden observarse en este dispositivo, qué evidencia respalda cada señal, qué nivel de confianza tiene cada una y qué aspectos no pueden determinarse mediante una aplicación Android normal?**
+
+La Fase 5 **no debe responder por sí sola**:
+
+> "El teléfono está rooteado."
+
+> "El bootloader está desbloqueado."
+
+> "El teléfono es seguro."
+
+> "El teléfono está comprometido."
+
+Esas conclusiones solamente podrán construirse posteriormente mediante la combinación de múltiples evidencias y reglas explícitas.
+
+
 ---
 
 # 11. Fase 6 — Interfaz
 
-## Pantallas
+## Estado: PARCIALMENTE IMPLEMENTADA
 
-### Inicio
+La Fase 6 original describía un wireframe conceptual con 4 pantallas y un motor de riesgo que no forma parte del MVP local. Se implementó todo lo que es factible sin un motor de riesgo.
+
+## Implementado
+
+### Inicio (`HomeScreen.tsx`)
 
 ```text
 ┌─────────────────────────┐
-│   ANALIZAR EQUIPO       │
+│   CelUsado              │
+│   Diagnóstico y verif.  │
 │                         │
-│   Samsung A56           │
+│   Dispositivo actual    │
+│   Sin analizar          │
 │                         │
-│   Estado: Sin analizar  │
+│   [Analizar equipo]     │
+│                         │
+│   [Info] [Apps] [Inf.]  │
 └─────────────────────────┘
 ```
 
-### Análisis
+### Análisis (`ScanScreen.tsx`)
 
-Mostrar progreso:
-
-```text
-✓ Información del equipo
-✓ Aplicaciones
-✓ Permisos
-✓ Administración
-✓ Integridad
-```
-
-### Resultado
+Progreso de 5 pasos:
 
 ```text
-RIESGO GENERAL
-
-       🟠 ALTO
-
-Motivos:
-• Administrador activo
-• FORCE_LOCK
-• Aplicación asociada a plataforma conocida
+○ Información del equipo
+○ Análisis de aplicaciones
+○ Análisis de administración
+○ Análisis de integridad
+○ Generar informe
 ```
 
-### Detalle
+Cada paso muestra estado: ○ pendiente, ◎ ejecutando, ✓ completado, ✗ error.
 
-Cada alerta debe permitir ver:
+### Resultado (`ReportScreen.tsx`)
 
-- aplicación
-- package name
-- indicador
-- permiso/política
-- evidencia
-- nivel
-- explicación
-- fuente, cuando exista
+El informe muestra secciones de cobertura y indicadores por fase:
+
+```text
+INFORME DE DIAGNÓSTICO
+
+1. IDENTIFICACIÓN
+   Fabricante / Modelo / Marca / Android / SDK
+
+2. HARDWARE
+   SoC / Board / RAM / Almacenamiento / CPU
+
+3. SOFTWARE
+   Versión / Parche seguridad / Fingerprint / Bootloader / Build Tags / Type
+
+COBERTURA - ANÁLISIS DE APLICACIONES
+   Descubiertos / Analizados / Estado
+
+COBERTURA - ANÁLISIS DE ADMINISTRACIÓN
+   Indicadores / Estado / Limitaciones
+
+INTEGRIDAD DEL DISPOSITIVO
+   [Badge de estado general]
+
+COBERTURA - ANÁLISIS DE INTEGRIDAD
+   Indicadores / Estado / No disponibles
+
+INDICADORES DE INTEGRIDAD (N)
+   Tipo / Valor / Fuente / Estado / Confidence
+
+CLASIFICACIÓN DE APLICACIONES
+   Sistema / OEM / Google / Operador / Usuario / Desconocido
+
+INDICADORES DE ADMINISTRACIÓN (N)
+   Tipo / Paquete / Estado / Confidence
+
+TODAS LAS APLICACIONES (N)
+   Nombre / Categoría
+
+CONCLUSIÓN
+   Resumen de indicadores de alto nivel
+
+METADATOS DEL INFORME
+   Fecha/hora / Versión app / Versión reglas / Conteos
+```
+
+### Detalle (`ApplicationDetailScreen.tsx`)
+
+Cada aplicación permite ver:
+
+- Identidad (nombre, paquete, versión, instalador)
+- Estado (sistema, actualizado, debug)
+- Clasificación (categoría, confianza, evidencia)
+- Fuentes de descubrimiento
+- Permisos declarados
+- Servicios, receptores, activities
+- Indicadores
+- Firma
+
+## Pendiente (requiere motor de riesgo)
+
+- **RIESGO GENERAL** con badge de color (ALTO / MEDIO / BAJO)
+- **Motivos** del nivel de riesgo
+- **Recomendaciones** por nivel
+- **Indicadores de financiación** (sin datos disponibles)
+
+## Archivos
+
+- `src/screens/Home/HomeScreen.tsx`
+- `src/screens/Scan/ScanScreen.tsx`
+- `src/screens/Report/ReportScreen.tsx`
+- `src/screens/Applications/ApplicationsScreen.tsx`
+- `src/screens/ApplicationDetail/ApplicationDetailScreen.tsx`
+- `src/screens/Device/DeviceScreen.tsx`
 
 ---
 
 # 12. Fase 7 — Informe
 
-Crear informe exportable.
+## Estado: PARCIALMENTE IMPLEMENTADA
 
-### Contenido
+La Fase 7 original pedía un informe exportable con 12 secciones, incluyendo riesgos, recomendaciones e indicadores de financiación que dependen de un motor de riesgo no implementado.
 
-1. Identificación
-2. Hardware
-3. Software
-4. Aplicaciones
-5. Capacidades administrativas
-6. Indicadores de financiación
-7. Integridad
-8. Riesgos
-9. Recomendaciones
-10. Fecha/hora
-11. versión de la aplicación
-12. versión de reglas
+## Implementado
 
-El informe debe diferenciar claramente:
+El informe se muestra en pantalla (`ReportScreen.tsx`) con las siguientes secciones:
 
-```text
-HECHO
-INDICIO
-NO DETERMINABLE
-```
+### Contenido implementado
+
+1. **Identificación** — Fabricante, modelo, marca, Android, SDK
+2. **Hardware** — SoC, board, RAM, almacenamiento, CPU
+3. **Software** — Versión, parche de seguridad, fingerprint, bootloader, build tags, build type
+4. **Aplicaciones** — Clasificación (SYSTEM/OEM/GOOGLE/CARRIER/USER/UNKNOWN), cobertura, lista
+5. **Capacidades administrativas** — Indicadores de Phase 4 con tipo, paquete, estado, confidence
+6. **Integridad** — Status general, indicadores de Phase 5, cobertura, checks no disponibles
+7. **Fecha/hora** — Timestamp del análisis
+8. **Versión de la app** — `0.0.1`
+9. **Versión de reglas** — `1.0.0`
+
+### Diferenciación HECHO / INDICIO / NO DETERMINABLE
+
+Cada indicador de Phase 4 y Phase 5 muestra un badge de nivel de evidencia:
+
+| Estado del indicador | Nivel | Color |
+|---|---|---|
+| CONFIRMED, ACTIVE | HECHO | Verde |
+| DECLARED, CAPABLE, DETECTED | INDICIO | Amarillo |
+| NOT_DETECTED, NOT_ACCESSIBLE, NOT_AVAILABLE, NOT_DETERMINABLE, NOT_SUPPORTED, ERROR | NO DETERMINABLE | Gris |
+
+### Pendiente (requiere motor de riesgo)
+
+- **Indicadores de financiación** — sin datos disponibles para detectar
+- **Riesgos** — requiere motor de reglas que combine indicadores de Phase 3, 4 y 5
+- **Recomendaciones** — dependen del nivel de riesgo calculado
+- **Exportable** — formato PDF/JSON compartible (requiere decisión de formato)
+
+## Archivos
+
+- `src/screens/Report/ReportScreen.tsx`
 
 ---
 
@@ -1891,7 +3197,7 @@ GET /device-models/{tac}
 
 ---
 
-# 14. Base de datos
+# 14. Fase 9 — Base de datos
 
 Tablas iniciales:
 
@@ -1919,7 +3225,7 @@ confidence
 
 ---
 
-# 15. Pruebas
+# 15. Fase 10 — Pruebas
 
 Crear un laboratorio con dispositivos/emuladores que representen:
 
@@ -1965,7 +3271,7 @@ HIGH
 
 ---
 
-# 16. Seguridad y privacidad
+# 16. Fase 11 — Seguridad y privacidad
 
 La aplicación puede manejar datos extremadamente sensibles del dispositivo.
 
@@ -1982,7 +3288,7 @@ La aplicación puede manejar datos extremadamente sensibles del dispositivo.
 
 ---
 
-# 17. Compatibilidad con Google Play
+# 17. Fase 12 — Compatibilidad con Google Play
 
 Antes de publicar:
 
@@ -1999,7 +3305,7 @@ No implementar funcionalidades únicamente porque técnicamente sean posibles si
 
 ---
 
-# 18. MVP
+# 18. Fase 13 — MVP
 
 La primera versión debe ser pequeña.
 
@@ -2047,7 +3353,7 @@ El objetivo del MVP es demostrar que el **análisis técnico local funciona corr
 
 ---
 
-# 19. MVP-2
+# 19. Fase 14 — MVP-2
 
 **Esfuerzo estimado:** 2-3 semanas (1 desarrollador)
 
@@ -2062,7 +3368,7 @@ Añadir:
 
 ---
 
-# 20. MVP-3
+# 20. Fase 15 — MVP-3
 
 **Esfuerzo estimado:** 3-4 semanas (1-2 desarrolladores)
 

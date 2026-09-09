@@ -42,6 +42,32 @@ export type IntegrityIndicators = {
   bootloader: string;
 };
 
+export type IntegrityAnalysisResult = {
+  overallStatus: string;
+  indicators: Array<{
+    type: string;
+    status: string;
+    confidence: number;
+    source: string;
+    value: string | null;
+    evidence: Array<{
+      type: string;
+      source: string;
+      field: string | null;
+      value: string | null;
+      description: string | null;
+    }>;
+    limitations: string[];
+  }>;
+  coverage: {
+    status: string;
+    availableChecks: string[];
+    unavailableChecks: string[];
+    limitations: string[];
+  };
+  limitations: string[];
+};
+
 export type ScanResult = {
   deviceInfo: import('./device').DeviceInfo;
   devicePolicy: DevicePolicyInfo;

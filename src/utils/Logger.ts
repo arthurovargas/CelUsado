@@ -15,6 +15,52 @@ type LogEntry = {
 
 const MAX_LOG_ENTRIES = 1000;
 
+const SENSITIVE_PATTERNS = [
+  /serial/i,
+  /imei/i,
+  /imsi/i,
+  /iccid/i,
+  /meid/i,
+  /android_id/i,
+  / advertising_id/i,
+  /uuid/i,
+];
+
+function sanitizeData(data: unknown): unknown {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (typeof data === 'string') {
+    let sanitized = data;
+    for (const pattern of SENSITIVE_PATTERNS) {
+      if (pattern.test(sanitized)) {
+        return '[REDACTED]';
+      }
+    }
+    return sanitized;
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeData(item));
+  }
+
+  if (typeof data === 'object') {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      const isSensitiveKey = SENSITIVE_PATTERNS.some(p => p.test(key));
+      if (isSensitiveKey) {
+        sanitized[key] = '[REDACTED]';
+      } else {
+        sanitized[key] = sanitizeData(value);
+      }
+    }
+    return sanitized;
+  }
+
+  return data;
+}
+
 class Logger {
   private entries: LogEntry[] = [];
   private static instance: Logger;
@@ -45,12 +91,14 @@ class Logger {
   }
 
   private log(level: LogLevel, tag: string, message: string, data?: unknown) {
+    const sanitizedData = data ? sanitizeData(data) : undefined;
+
     const entry: LogEntry = {
       timestamp: Date.now(),
       level,
       tag,
       message,
-      data,
+      data: sanitizedData,
     };
 
     this.entries.push(entry);
@@ -63,16 +111,16 @@ class Logger {
       const prefix = `[${level}][${tag}]`;
       switch (level) {
         case LogLevel.DEBUG:
-          console.debug(prefix, message, data ?? '');
+          console.debug(prefix, message, sanitizedData ?? '');
           break;
         case LogLevel.INFO:
-          console.log(prefix, message, data ?? '');
+          console.log(prefix, message, sanitizedData ?? '');
           break;
         case LogLevel.WARN:
-          console.warn(prefix, message, data ?? '');
+          console.warn(prefix, message, sanitizedData ?? '');
           break;
         case LogLevel.ERROR:
-          console.error(prefix, message, data ?? '');
+          console.error(prefix, message, sanitizedData ?? '');
           break;
       }
     }

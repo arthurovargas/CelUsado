@@ -1,10 +1,6 @@
 export type RootStackParamList = {
-  Home: undefined;
-  Scan: undefined;
-  Applications: undefined;
-  ApplicationDetail: {packageName: string};
-  Device: undefined;
-  Report: undefined;
+  Main: undefined;
+  AppDetail: {packageName: string};
 };
 
 declare global {
