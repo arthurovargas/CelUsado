@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A1A2E"/>
+      <stop offset="100%" style="stop-color:#16213E"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3498DB"/>
+      <stop offset="100%" style="stop-color:#2980B9"/>
+    </linearGradient>
+    <linearGradient id="phoneBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3A3A3C"/>
+      <stop offset="100%" style="stop-color:#2C2C2E"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background - dark blue -->
+  <rect width="1024" height="1024" rx="200" fill="url(#bg)"/>
+  
+  <!-- Phone shadow -->
+  <rect x="248" y="68" width="544" height="900" rx="50" fill="#0A0A0C" opacity="0.5"/>
+  
+  <!-- Phone body - lighter to contrast with background -->
+  <rect x="240" y="60" width="544" height="900" rx="50" fill="url(#phoneBody)" stroke="#6A6A6C" stroke-width="6"/>
+  
+  <!-- Phone inner frame -->
+  <rect x="252" y="72" width="520" height="876" rx="44" fill="#0A0A0C"/>
+  
+  <!-- Phone screen -->
+  <rect x="262" y="82" width="500" height="856" rx="40" fill="#E8E8E8"/>
+  
+  <!-- Dynamic Island / Camera cutout -->
+  <rect x="440" y="100" width="144" height="30" rx="15" fill="#0A0A0C"/>
+  
+  <!-- Front camera -->
+  <circle cx="512" cy="115" r="10" fill="#1C1C1E" stroke="#333" stroke-width="2"/>
+  <circle cx="512" cy="115" r="4" fill="#2A2A4A"/>
+  
+  <!-- Speaker grille -->
+  <rect x="478" y="105" width="68" height="5" rx="2.5" fill="#333"/>
+  
+  <!-- Side buttons -->
+  <!-- Volume up -->
+  <rect x="232" y="220" width="6" height="70" rx="3" fill="#5A5A5C"/>
+  <!-- Volume down -->
+  <rect x="232" y="310" width="6" height="70" rx="3" fill="#5A5A5C"/>
+  <!-- Power button -->
+  <rect x="786" y="280" width="6" height="90" rx="3" fill="#5A5A5C"/>
+  
+  <!-- Bottom speaker grille -->
+  <rect x="400" y="920" width="28" height="5" rx="2.5" fill="#333"/>
+  <rect x="440" y="920" width="28" height="5" rx="2.5" fill="#333"/>
+  <rect x="480" y="920" width="28" height="5" rx="2.5" fill="#333"/>
+  <rect x="520" y="920" width="28" height="5" rx="2.5" fill="#333"/>
+  <rect x="560" y="920" width="28" height="5" rx="2.5" fill="#333"/>
+  <rect x="600" y="920" width="28" height="5" rx="2.5" fill="#333"/>
+  
+  <!-- USB-C port -->
+  <rect x="478" y="905" width="68" height="10" rx="5" fill="#333"/>
+  
+  <!-- Home indicator -->
+  <rect x="420" y="890" width="184" height="6" rx="3" fill="#5A5A5C"/>
+  
+  <!-- Shield - centered on screen -->
+  <path d="M512 360 L610 405 L610 495 Q610 585 512 640 Q414 585 414 495 L414 405 Z" 
+        fill="url(#shield)" stroke="#FFFFFF" stroke-width="10"/>
+  
+  <!-- Checkmark -->
+  <path d="M468 495 L505 535 L570 425" fill="none" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
